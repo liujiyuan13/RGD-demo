@@ -1,0 +1,62 @@
+data_name = 'proteinFold';
+data_path = 'D:\Work\datasets\Kmatrix\';
+load([data_path, data_name, '_Kmatrix.mat'], 'KH');
+
+numker = size(KH, 3);
+K = kcenter(KH);
+K = knorm(K);
+
+M = zeros(numker);
+for p=1:numker
+    for q=1:numker
+        M(p,q) = trace(K(:,:,p)*K(:,:,q));
+    end
+end
+M = (M+M')/2;
+
+% ----------------------------------------------------------
+% QP problem: quadprog()
+f = [];
+A = [];
+b = [];
+Aeq = ones(1,numker);
+beq = 1;
+lb = zeros(numker,1);
+ub = ones(numker,1);
+[beta_1,fval,exitflag] = quadprog(H,f,A,b,Aeq,beq,lb,ub);
+
+
+% ----------------------------------------------------------
+% QP problem: RGD_1
+maxiter = 1e5;
+[beta_2, sbeta_2, obj_2] = RGD_demo_1(M, maxiter);
+
+% ----------------------------------------------------------
+% QP problem: RGD_1
+maxiter = 1e5;
+[beta_3, sbeta_3, obj_3] = RGD_demo_2(M, maxiter);
+
+figure(1)
+set(gcf,'position',[0,0,1000,400]);
+bar([beta_1,beta_2,beta_3]);
+ylim([0, 0.5]);
+% legend('quadprog()', 'RGD 1', 'RGD 2');
+legend('\fontsize{12}{quadprog()}', '\fontsize{12}{RGD 1}', '\fontsize{12}{RGD 2}');
+
+figure(2)
+set(gcf,'position',[0,0,1000,400]);
+sp1 = subplot(1,2,1);
+plot(obj_2);
+hold on;
+titile('\fontsize{12}{RGD 1}');
+xlabel('\fontsize{12}{Index}');
+ylabel('\fontsize{12}{\boldsymbol{\beta}}');
+sp2 = subplot(1,2,2);
+plot(obj_3);
+hold on;
+titile('\fontsize{12}{RGD 2}');
+xlabel('\fontsize{12}{Index}');
+ylabel('\fontsize{12}{\boldsymbol{\beta}}');
+
+
+
