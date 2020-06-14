@@ -33,7 +33,7 @@ maxiter = 1e5;
 [beta_2, sbeta_2, obj_2] = RGD_demo_1(M, maxiter);
 
 % ----------------------------------------------------------
-% QP problem: RGD_1
+% QP problem: RGD_2
 maxiter = 1e5;
 [beta_3, sbeta_3, obj_3] = RGD_demo_2(M, maxiter);
 
