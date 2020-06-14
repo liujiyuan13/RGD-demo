@@ -10,6 +10,9 @@
 \usepackage{graphicx} % Required for the inclusion of images
 \usepackage{natbib} % Required to change bibliography style to APA
 \usepackage{amsmath} % Required for some math elements 
+\usepackage{amsfonts}
+\usepackage{algorithm}
+\usepackage{algorithmic}
 
 \setlength\parindent{0pt} % Removes all indentation from paragraphs
 
@@ -54,6 +57,17 @@ Supervisor: & Xinwang Liu % Instructor/supervisor
 
 \section{Objective}
 
+Defining $\mathbf{M} \in \mathbb{R}^{m\times m}$ a positive-defined symmetric matrix, the optimization problem can be given as 
+\begin{equation}\label{eq:obj}
+	\begin{split}
+		\min_{\boldsymbol{\beta}} \boldsymbol{\beta}^\top\mathbf{M}\boldsymbol{\beta} \quad s.t. \sum_{p=1}^m \beta_p = 1,\; \beta_p\geq 0,\; \forall p.
+	\end{split}
+\end{equation}
+
+It can be observed that Eq. (\ref{eq:obj}) is convex.
+Therefore, the minimum can be found with an unique solution.
+In fact, This is a classical Quadratic Programming problem which can be easily solved via \emph{quadprog} function in MATLAB.
+But we are going to show how to solve it via Reduced Gradient Descent algorithm. 
 
 %----------------------------------------------------------------------------------------
 %	SECTION 2
@@ -61,7 +75,68 @@ Supervisor: & Xinwang Liu % Instructor/supervisor
 
 \section{Optimization}
 
+Directly applying Gradient Descent algorithm is infeasible, for there are constraint on $\boldsymbol{\beta}$.
+For ease of expression, The optimization problem is firstly transformed into 
+\begin{equation}\label{eq:obj_tran}
+	\begin{split}
+		\min_{\boldsymbol{\beta}\in \bigtriangleup} &\; \mathcal{J}(\boldsymbol{\beta}) \\
+		s.t. & \; \mathcal{J}(\boldsymbol{\beta}) = \boldsymbol{\beta}^\top\mathbf{M}\boldsymbol{\beta},
+	\end{split}
+\end{equation}
+where $\bigtriangleup = \{ \boldsymbol{\beta} \in \mathbb{R}^m\; |\; \sum_{p=1}^m \beta_p = 1,\; \beta_p\geq 0,\; \forall p\}$.
+At the same time, $\mathcal{J}(\boldsymbol{\beta})$ is differentiable, and
+\begin{equation}\label{eq:obj_derivative}
+	\begin{split}
+		\frac{\partial \mathcal{J}(\boldsymbol{\beta})}{\partial \boldsymbol{\beta}}\; =\; 2\mathbf{M}\boldsymbol{\beta}
+	\end{split}
+\end{equation}
+To fulfill this goal, we firstly handle the equality constraint by computing the reduced gradient by following \cite{rakotomamonjy2008simplemkl}.
+Let $\beta_u$ be a non-zero component of $\boldsymbol{\beta}$ and $\bigtriangledown \mathcal{J}(\boldsymbol{\beta})$ denote the reduced gradient of $\mathcal{J}(\boldsymbol{\beta})$.
+The $p$-th ($1\leq p \leq m$) element of $\bigtriangledown \mathcal{J}(\boldsymbol{\beta})$ is
+\begin{equation}\label{eq:p_derivative}
+	\begin{split}
+		[\bigtriangledown \mathcal{J}(\boldsymbol{\beta})]_p = \frac{\partial \mathcal{J}(\boldsymbol{\beta})}{\partial \beta_p} - \frac{\partial \mathcal{J}(\boldsymbol{\beta})}{\partial \beta_u},\; \forall p \neq u
+	\end{split}
+\end{equation}
+and 
+\begin{equation}\label{eq:u_derivative}
+	\begin{split}
+		[\bigtriangledown \mathcal{J}(\boldsymbol{\beta})]_u = \sum_{p=1,p\neq u}^m (\frac{\partial \mathcal{J}(\boldsymbol{\beta})}{\partial \beta_u} - \frac{\partial \mathcal{J}(\boldsymbol{\beta})}{\partial \beta_p}).
+	\end{split}
+\end{equation}
+We choose $u$ to be the index of the largest component of vector $\boldsymbol{\beta}$ which is considered to provide better numerical stability.
+The gradients for updating $\boldsymbol{\beta}$ can be given as 
+\begin{equation}\label{eq:gradient}
+	\begin{split}
+		d_p = \left\{
+			\begin{array}{ll}
+			0	&	\mathrm{if}\; \beta_p=0\; \mathrm{and}\; [\bigtriangledown \mathcal{J}(\boldsymbol{\beta})]_p > 0\\
+			- [\bigtriangledown \mathcal{J}(\boldsymbol{\beta})]_p  &  \mathrm{if}\; \beta_p>0\; \mathrm{and}\; p\neq u\\
+			- [\bigtriangledown \mathcal{J}(\boldsymbol{\beta})]_u  &  \mathrm{if}\; p=u
+			\end{array} \right.
+	\end{split}
+\end{equation}
+This way, $\boldsymbol{\beta}$ can be computed via updating scheme $\boldsymbol{\beta} \leftarrow \boldsymbol{\beta} + \alpha \mathbf{d}$, where $\alpha$ is the step size.
+The overall algorithm can be designed in Algorithm \ref{alg:RGD_alg}.
 
+
+\begin{algorithm}[h]
+\caption{A Demo of Reduced Gradient Descent Algorithm}
+\label{alg:RGD_alg}
+\textbf{Input}: $\mathbf{M}$\\
+\textbf{Output}: $\boldsymbol{\beta}$
+\begin{algorithmic}[1] %[1] enables line numbers
+\STATE initialize $\boldsymbol{\beta}^{(1)}=\mathbf{1}_m/m$, $t=1$ and $flag=1$.
+\WHILE{$flag$}
+  \STATE compute $\frac{\partial \mathcal{J}(\boldsymbol{\beta})}{\partial \beta_p}$ and $\mathbf{d}^{(t)}$ in Eq. (\ref{eq:gradient}).
+  \STATE update $\boldsymbol{\beta}^{(t+1)} \leftarrow \boldsymbol{\beta}^{(t)} + \alpha \mathbf{d}^{(t)}$.
+  \IF{$\max |\boldsymbol{\beta}^{(t+1)}-\boldsymbol{\beta}^{(t)}| \leq 1e^{-4}$}
+  		\STATE $flag$ = 0.
+  \ENDIF
+  \STATE $t \leftarrow t+1$.
+\ENDWHILE
+\end{algorithmic}
+\end{algorithm}
 
 
 
