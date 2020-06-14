@@ -160,30 +160,30 @@ At the same time, $\mathcal{J}(\boldsymbol{\beta})$ is differentiable, and
 		\frac{\partial \mathcal{J}(\boldsymbol{\beta})}{\partial \boldsymbol{\beta}}\; =\; 2\mathbf{M}\boldsymbol{\beta}
 	\end{split}
 \end{equation}
-To ensure the constraint $\beta_p \geq 0,\; \forall p$, we compute the derivatives of $\mathcal{J}(\boldsymbol{\beta})$ as 
+We define an index set
 \begin{equation}
 	\begin{split}
-		\delta_p = \left\{
+		\Omega' = \{p\; |\; \mathrm{if}\; \beta_p=0\; \mathrm{and}\; \frac{\partial \mathcal{J}(\boldsymbol{\beta})}{\partial \beta_p} > 0\},
+	\end{split}
+\end{equation}
+and the complement set 
+\begin{equation}
+	\begin{split}
+		\Omega = \{p\; |\; p \notin \Omega'\}.
+	\end{split}
+\end{equation}
+In order to ensure $\sum_{p=1}^m \beta_p = 1,\;\beta_p \geq 0,\; \forall p$, we define the reduced gradient of $\mathcal{J}(\boldsymbol{\beta})$ by following \cite{rakotomamonjy2008simplemkl} as 
+\begin{equation}\label{eq:gradient}
+	\begin{split}
+		[\bigtriangledown \mathcal{J}(\boldsymbol{\beta})]_p = \left\{
 			\begin{array}{ll}
-			0	&	\mathrm{if}\; \beta_p=0\; \mathrm{and}\; \frac{\partial \mathcal{J}(\boldsymbol{\beta})}{\partial \beta_p} > 0\\
-			\frac{\partial \mathcal{J}(\boldsymbol{\beta})}{\partial \beta_p}  &  \mathrm{otherwise}
+			0	&	p\in \Omega' \\
+			\frac{\partial \mathcal{J}(\boldsymbol{\beta})}{\partial \beta_p} - \frac{\partial \mathcal{J}(\boldsymbol{\beta})}{\partial \beta_u}  &  p\neq u,\; p\in \Omega,\; u\in \Omega\\
+			\sum_{p\in \Omega,p\neq u} (\frac{\partial \mathcal{J}(\boldsymbol{\beta})}{\partial \beta_u} - \frac{\partial \mathcal{J}(\boldsymbol{\beta})}{\partial \beta_p}) & p=u, \; p\in \Omega,\; u\in \Omega,
 			\end{array} \right.
 	\end{split}
 \end{equation}
-To ensure $\sum_{p=1}^m \beta_p = 1$, we define the reduced gradient of $\mathcal{J}(\boldsymbol{\beta})$ by following \cite{rakotomamonjy2008simplemkl} as 
-\begin{equation}\label{eq:p_derivative_two}
-	\begin{split}
-		[\bigtriangledown \mathcal{J}(\boldsymbol{\beta})]_p = \delta_p - \delta_u,\; \forall p \neq u
-	\end{split}
-\end{equation}
-and 
-\begin{equation}\label{eq:u_derivative_two}
-	\begin{split}
-		[\bigtriangledown \mathcal{J}(\boldsymbol{\beta})]_u = \sum_{p=1,p\neq u}^m (\delta_u - \delta_p).
-	\end{split}
-\end{equation}
-
-We choose $u$ to be the index of the largest component of vector $\boldsymbol{\beta}$ which is considered to provide better numerical stability.
+where $u$ is chosen as the index of the largest component of vector $\boldsymbol{\beta}$ which is considered to provide better numerical stability.
 The gradients for updating $\boldsymbol{\beta}$ can be obtained as 
 \begin{equation}\label{eq:gradient_two}
 	\begin{split}
